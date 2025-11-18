@@ -32,7 +32,7 @@ on:
         
 jobs:
   # Job: Build and push Docker image to ECR. Also, upload docker image digest as artifact info.
-  build:
+  push:
     name: Push (${{ inputs.registry }})    
     runs-on: ubuntu-22.04
 
