@@ -1,0 +1,80 @@
+name: Docker Build and Push
+
+# Define event to trigger the workflow.
+# NOTE: This job is intended to be called from other workflows (e.g: release.yml, deploy.yml or deploy-to-env.yml)  
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: 'The git ref to build (e.g: v1.2.3)'
+        default: ''
+        type: string
+        required: false
+      context:
+        description: 'The build context for the Docker image. (e.g: ./app)'
+        default: '.'
+        type: string
+        required: false
+      dockerfile: 
+        description: "The Dockerfile to use for building the image. (e.g: ./app/Dockerfile)"
+        default: 'Dockerfile'
+        type: string
+        required: false
+      registry:
+        description: 'The registry to push the Docker image to (e.g: ghcr.io)'
+        required: false
+        default: 'ghcr.io'
+        type: string
+      repository:
+        description: 'The repository name to push the Docker image to (e.g: my-org/my-app)'
+        required: true
+        type: string
+        
+jobs:
+  # Job: Build and push Docker image to ECR. Also, upload docker image digest as artifact info.
+  build:
+    name: Push (${{ inputs.registry }})    
+    runs-on: ubuntu-22.04
+
+    steps:
+      # Step 1: Checkout the code.
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
+       
+      # Step 2: Login to GitHub Container Registry.
+      - name: Login to ghcr.io
+        if: inputs.registry == 'ghcr.io'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ inputs.registry }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      # Step 3: Set up Docker Buildx.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 4: Set IMAGE_TAG to environment variables.
+      - name: Set IMAGE_TAG
+        run: |
+            if [ "${{ inputs.ref }}" != "" ]; then
+              echo "IMAGE_TAG=${{ inputs.ref }}" >> $GITHUB_ENV
+            else
+              short_sha=$(git rev-parse --short ${{ github.sha }})
+              echo "IMAGE_TAG=${short_sha}" >> $GITHUB_ENV
+            fi
+
+      # Step 5: Build and push Docker image.
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        env:
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          push: true
+          tags: |
+            "${{ inputs.registry }}/${{ inputs.repository }}:${{ env.IMAGE_TAG }}"
+            "${{ inputs.registry }}/${{ inputs.repository }}:latest"
