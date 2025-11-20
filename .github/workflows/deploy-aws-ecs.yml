@@ -1,0 +1,62 @@
+# This is a reusable workflow that allows you to deploy the app to the environment.
+name: "Deploy"
+
+# Define the event that triggers the workflow.
+# This workflow is triggered by a workflow call event.
+on:
+  workflow_call:
+    inputs:
+      env:
+        description: "Environment to be deployed."
+        type: string
+        required: true
+      repository:
+        description: "ECR Repository name."
+        type: string
+        required: true
+      service:
+        description: "Service to deploy."
+        type: string
+        required: true
+      timeout-minutes:
+        description: "Timeout in minutes for the ECS deployment."
+        default: 10
+        type: number
+
+# Define the jobs that run in the workflow.
+jobs:
+  ecs-fargate:
+    name: "ECS Fargate"
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.env }}
+
+    steps:
+      # Step 1: Checkout repo
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      # Step 2: Download the image URI artifact.
+      - name: Download Artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: artifacts
+
+      # Step 3: Read the image URI from the file and export it as an output variable.
+      - name: Get Image URI
+        id: get-image-uri
+        run: |
+          IMAGE_URI=$(cat image-uri.txt)
+          echo "result=$IMAGE_URI" >> $GITHUB_OUTPUT
+
+      - name: Get Image Tag
+        id: get-image-tag
+        run: |
+          IMAGE_TAG=$(cat image-tag.txt)
+          echo "result=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      # Step 4: Debug: Print the image URI.
+      - name: Debug 
+        run: |
+          echo "Image URI: ${{ steps.get-image-uri.outputs.result }}"
+          echo "Image Tag: ${{ steps.get-image-tag.outputs.result }}"
+      
