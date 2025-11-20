@@ -1,4 +1,4 @@
-# This is a reusable workflow that allows you to deploy the app to the environment.
+# This is a reusable workflow that allows you to deploy the app to the environment using GitOps.
 name: "Deploy"
 
 # Define the event that triggers the workflow.
