@@ -79,15 +79,21 @@ jobs:
           tags: |
             "${{ inputs.registry }}/${{ inputs.repository }}:${{ env.IMAGE_TAG }}"
             "${{ inputs.registry }}/${{ inputs.repository }}:latest"
-
-      # Step 6: Get Digest and Image URL
-      - name: Get Digest and Image URL
+      
+      # Step 6: Create a file with the Docker image reference including the digest.
+      - name: Save Docker image reference (with digest) to file
+        env:
+          IMAGE_DIGEST: ${{ steps.docker-build.outputs.digest }}
+          DOCKER_IMAGE: ${{ inputs.registry }}/${{ inputs.repository }}
         run: |
-          IMAGE_DIGEST=${{ steps.docker-build.outputs.digest }}
-          IMAGE_URL="${{ steps.docker-build.outputs.imageid }}@${IMAGE_DIGEST}"
-          
-          echo "IMAGE_DIGEST=$IMAGE_DIGEST" >> $GITHUB_ENV
-          echo "IMAGE_URL=$IMAGE_URL" >> $GITHUB_ENV
-          
-          echo "✅ Imagen Subida - Digest: $IMAGE_DIGEST"
-          echo "✅ Imagen Subida - URL: $IMAGE_URL"
+          IMAGE_WITH_DIGEST="${DOCKER_IMAGE}@${IMAGE_DIGEST}"
+          echo $IMAGE_WITH_DIGEST > docker-image-with-digest.txt
+
+      # Step 7: Upload Docker image reference artifact
+      # This will be used in subsequent jobs/workflows to reference the exact image pushed.
+      - name: Upload Docker image reference artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: docker-image-with-digest
+          path: |
+            docker-image-with-digest.txt
