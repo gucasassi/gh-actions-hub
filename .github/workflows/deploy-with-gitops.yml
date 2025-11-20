@@ -10,30 +10,26 @@ on:
         description: "Environment to be deployed."
         type: string
         required: true
-      repository:
-        description: "ECR Repository name."
+      app:
+        description: "Application to be deployed."
         type: string
         required: true
-      service:
-        description: "Service to deploy."
+      gitops-repo:
+        description: "GitOps repository used for deployment."
         type: string
         required: true
-      timeout-minutes:
-        description: "Timeout in minutes for the ECS deployment."
-        default: 10
-        type: number
 
 # Define the jobs that run in the workflow.
 jobs:
-  ecs-fargate:
-    name: "ECS Fargate"
+  gitops-deploy:
+    name: "With GitOps"
     runs-on: ubuntu-latest
     environment: ${{ inputs.env }}
 
     steps:
-      # Step 1: Checkout repo
-      - name: Checkout Code
+      # Step 1: Debug
+      - name: Debug Info
         run: |
-          echo "Hi there!"
+          echo "Deploying application ${{ inputs.app }} to environment ${{ inputs.env }} using GitOps repo ${{ inputs.gitops-repo }}"
         
       
