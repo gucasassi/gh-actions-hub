@@ -10,12 +10,12 @@ on:
         description: "Environment to be deployed."
         type: string
         required: true
-      repository:
-        description: "ECR Repository name."
+      cluster:
+        description: "ECS Cluster to deploy to."
         type: string
         required: true
       service:
-        description: "Service to deploy."
+        description: "ECS Service to be updated."
         type: string
         required: true
       timeout-minutes:
