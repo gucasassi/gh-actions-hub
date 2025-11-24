@@ -32,7 +32,7 @@ jobs:
     steps:
       # Step 1: Checkout repository with full history.
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Fetch all history for release-please.
 
